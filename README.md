@@ -56,7 +56,16 @@ From the visual above, we can see that the model improved significantly from fir
 
 ## Project Status
 
-Project is completed.
+Project is completed for the assignment. It is still in progress for the portfolio.
+
+## Room for Improvement
+
+Room for improvement:
+- Develop model deployment
+- Develop Streamlit app for users
+
+To do:
+- Deploy the model on the Streamlit app
 
 ## Credits and Acknowledgements
 
