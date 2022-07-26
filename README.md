@@ -33,7 +33,7 @@ Text documents are essential as they are one of the richest sources of data for 
 2) Download the models folder from the repository and upload it in Google Colab
 3) Run the model
 
-## Model Development
+## Model
 
 - This dataset is a text classification problem, thus a Deep Learning algorithm called Natural Language Processing was used.
 - The following is the architecture of the model used:
