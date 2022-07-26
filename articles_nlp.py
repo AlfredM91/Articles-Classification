@@ -5,14 +5,43 @@ Created on Tue Jul 26 09:07:57 2022
 @author: aaron
 """
 
-import os 
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Embedding, Bidirectional
+from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.preprocessing.text import Tokenizer
+from sklearn.metrics import classification_report
+from tensorflow.keras import Input, Sequential
+from tensorflow.keras.utils import plot_model
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
+
+import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+import datetime
+import pickle
+import json
+import os 
+import re
+
+#%% Constants
+
+PLOT_PATH = os.path.join(os.getcwd(),'statics','model.png')
+LOGS_PATH = os.path.join(os.getcwd(),'logs',datetime.datetime.now().
+                         strftime('%Y%m%d-%H%M%S'))
+TOKENIZER_SAVE_PATH = os.path.join(os.getcwd(),'saved_models','tokenizer.json')
+OHE_SAVE_PATH = os.path.join(os.getcwd(),'saved_models','ohe.pkl')
+MODEL_SAVE_PATH = os.path.join(os.getcwd(),'saved_models','model.h5')
+
+#%% Exploratory Data Analysis
 
 #%% Step 1 ) Data Loading
 
 df = pd.read_csv("https://raw.githubusercontent.com/susanli2016/PyCon-Canada-2019-NLP-Tutorial/master/bbc-text.csv")
 
 #%% Step 2) Data Inspection/Visualization
+
 df.info()
 df.describe().T
 df.head()
@@ -23,15 +52,10 @@ df.isna().sum()
 print(df['text'][4])
 print(df['text'][10])
 
-# Symbols and HTML Tags have to be removed
-
 #%% Step 3) Data Cleaning
-
-import re
 
 text = df['text']
 category = df['category']
-
 
 for index, words in enumerate(df['text']):
     # to remove html tags
@@ -45,14 +69,12 @@ for index, words in enumerate(df['text']):
 text_backup = text.copy()
 category_backup = category.copy()
 
-#%% Step 5) Data Preprocessing
+#%% Step 4) Features Selection - text is the feature, category is the target
 
-from tensorflow.keras.preprocessing.text import Tokenizer
-import numpy as np
+#%% Step 5) Data Preprocessing
 
 vocab_size = 0
 compiled = []
-
 
 for i in np.arange(0,df.shape[0],1):
     compiled.extend(text[i])
@@ -64,10 +86,6 @@ oov_token = '<OOV>'
 tokenizer = Tokenizer(num_words=vocab_size,oov_token=oov_token)
 tokenizer.fit_on_texts(text)
 
-# word_index = tokenizer.word_index
-
-# print(dict(list(word_index.items())[0:10]))
-
 text_int = tokenizer.texts_to_sequences(text) # to convert into numbers
 
 length_text = []
@@ -76,19 +94,12 @@ for i in range(len(text_int)):
     length_text.append(len(text_int[i]))
     # print(len(review_int[i]))
 
-import numpy as np
-
 max_len = np.median([len(text_int[i]) for i in range(len(text_int))])
-
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 padded_text = pad_sequences(text_int,
                               maxlen=int(max_len),
                               padding='post',
                               truncating='post')
-
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
 
 # y target
 
@@ -100,9 +111,6 @@ X_train, X_test, y_train, y_test = train_test_split(padded_text,category,
                                                     random_state=123)
 
 #%% Model Development
-
-from tensorflow.keras.layers import LSTM, Dense, Dropout, Embedding, Bidirectional
-from tensorflow.keras import Input, Sequential
 
 input_shape = np.shape(X_train)[1:]
 
@@ -117,21 +125,11 @@ model.add(Dense(5,activation='softmax'))
 
 model.summary()
 
-from tensorflow.keras.utils import plot_model
-
-PLOT_PATH = os.path.join(os.getcwd(),'statics','model.png')
-
 plot_model(model,show_shapes=True,to_file=PLOT_PATH)
 
 model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=['acc'])
 
-#%%
-
-from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
-import datetime
-
-LOGS_PATH = os.path.join(os.getcwd(),'logs',datetime.datetime.now().
-                         strftime('%Y%m%d-%H%M%S'))
+#%% Model Training
 
 tensorboard_callback = TensorBoard(log_dir=LOGS_PATH, histogram_freq=1)
 early_callback = EarlyStopping(monitor='val_loss',patience=5)
@@ -150,8 +148,8 @@ hist = model.fit(X_train,y_train,
 
 #%% Model Evaluation/Analysis
 
-import matplotlib.pyplot as plt
 keys = list(hist.history.keys())
+
 plt.figure()
 plt.plot(hist.history[keys[0]])
 plt.plot(hist.history[keys[2]])
@@ -166,8 +164,6 @@ plt.xlabel('Epoch')
 plt.legend(['Training '+keys[1],'Validation '+keys[1]])
 plt.show()
 
-from sklearn.metrics import classification_report
-
 y_pred = np.argmax(model.predict(X_test),axis=1)
 y_actual = np.argmax(y_test,axis=1)
 
@@ -177,27 +173,18 @@ print(classification_report(y_actual, y_pred))
 
 # Tokenizer
 
-import json
-TOKENIZER_SAVE_PATH = os.path.join(os.getcwd(),'saved_models','tokenizer.json')
-
 token_json = tokenizer.to_json()
 
 with open(TOKENIZER_SAVE_PATH,'w') as file:
     json.dump(token_json,file)
 
-
 # OHE
-
-import pickle
-
-OHE_SAVE_PATH = os.path.join(os.getcwd(),'saved_models','ohe.pkl')
 
 with open(OHE_SAVE_PATH,'wb') as file:
     pickle.dump(ohe,file)
 
 # MODEL
 
-MODEL_SAVE_PATH = os.path.join(os.getcwd(),'saved_models','model.h5')
 model.save(MODEL_SAVE_PATH)
 
 
