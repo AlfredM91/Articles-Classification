@@ -7,6 +7,7 @@ This Deep Learning Natural Language Processing project is an assignment project 
 * [Technologies](#technologies)
 * [Installation](#installation)
 * [Model](#model)
+* [Room for Improvement](#room-for-improvement)
 * [Credits and Acknowledgments](#credits-and-acknowledgements)
 * [Contact](#contact)
 
