@@ -40,7 +40,7 @@ Text documents are essential as they are one of the richest sources of data for 
 
 ![model](statics/model.png)
 
-From the algorithm above, the model was able to produce an accuracy as high as 93.11% with f1 scores of more than 90% for all 5 categories.
+From the algorithm above, the model was able to produce an accuracy as high as 93.41% with f1 scores of at least 90% for all 5 categories.
 
 Below is the classification report produced::
 
